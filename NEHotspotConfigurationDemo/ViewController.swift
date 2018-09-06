@@ -78,6 +78,7 @@ class ViewController: UIViewController {
     NEHotspotConfigurationManager.shared.removeConfiguration(forSSID: ssid)
     self.statusLabel?.text = "Removing..."
     // Wait a couple seconds for the wifi to switch
+    // TODO(matt): use a notification instead.
     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
       self?.statusLabel?.text = self?.getWiFiSsid()
     }

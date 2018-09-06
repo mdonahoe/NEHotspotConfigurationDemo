@@ -26,6 +26,7 @@ class ViewController: UIViewController {
     self.statusLabel?.text = self.getWiFiSsid()
   }
   
+  // TODO(matt): Is there a short example of Reachability?
   func getWiFiSsid() -> String? {
     var ssid: String?
     if let interfaces = CNCopySupportedInterfaces() as NSArray? {

@@ -46,8 +46,8 @@ class ViewController: UIViewController {
       return
     }
     if let passphrase = self.passphraseInput?.text {
-      let hotspotConfig = NEHotspotConfiguration(ssid: ssid, passphrase: passphrase, isWEP: false)
       self.statusLabel?.text = "Connecting to \(ssid)..."
+      let hotspotConfig = NEHotspotConfiguration(ssid: ssid, passphrase: passphrase, isWEP: false)
       NEHotspotConfigurationManager.shared.apply(hotspotConfig) {[unowned self] (error) in
         if let error = error {
           if error._domain == kNEHotspotConfigurationErrorDomain && error._code == kErrorAlreadyAssociated {

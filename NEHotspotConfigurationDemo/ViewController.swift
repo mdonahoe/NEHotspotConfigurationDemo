@@ -26,7 +26,7 @@ class ViewController: UIViewController {
     self.statusLabel?.text = self.getWiFiSsid()
   }
   
-  // TODO(matt): Is there a short example of Reachability?
+  // TODO(matt): How do we get notified of ssid changes?
   func getWiFiSsid() -> String? {
     var ssid: String?
     if let interfaces = CNCopySupportedInterfaces() as NSArray? {
@@ -41,33 +41,45 @@ class ViewController: UIViewController {
   }
 
   @IBAction func didTapConnect(_ sender : Any) {
-    if let ssid = self.ssidInput?.text, let passphrase = self.passphraseInput?.text {
+    guard let ssid = self.ssidInput?.text, ssid != "" else {
+      self.statusLabel?.text = "Error: blank ssid"
+      return
+    }
+    if let passphrase = self.passphraseInput?.text {
       let hotspotConfig = NEHotspotConfiguration(ssid: ssid, passphrase: passphrase, isWEP: false)
       self.statusLabel?.text = "Connecting to \(ssid)..."
       NEHotspotConfigurationManager.shared.apply(hotspotConfig) {[unowned self] (error) in
         if let error = error {
           if error._domain == kNEHotspotConfigurationErrorDomain && error._code == kErrorAlreadyAssociated {
+            // NOTE: This error happens if we ask to connect to a network to which we already are associated.
+            // The request fails to apply, but we don't care since we are already connected.
             self.statusLabel?.text = "Connected"
           } else {
             self.statusLabel?.text = "Error: \(error.localizedDescription)"
           }
         } else {
-          // TODO(matt): check current ssid.
-          // If the desired ssid is not found, it might not be available.
-          self.statusLabel?.text = "Applied"
+          // NOTE: This branch can execute even if the ssid was not successfully joined. Check if we are on the expected ssid
+          if let currentSsid = self.getWiFiSsid(), currentSsid == self.ssidInput?.text {
+            self.statusLabel?.text = "Joined \(currentSsid)"
+          } else {
+            self.statusLabel?.text = "Not found"
+          }
         }
       }
-    } else {
-      self.statusLabel?.text = "error: blank"
     }
   }
   
   @IBAction func didTapRemove(_ sender : Any) {
-    if let ssid = self.ssidInput?.text {
-      NEHotspotConfigurationManager.shared.removeConfiguration(forSSID: ssid)
-      self.statusLabel?.text = "Removed"
-    } else {
-      self.statusLabel?.text = "Error: blank"
+    guard let ssid = self.ssidInput?.text, ssid != "" else {
+      self.statusLabel?.text = "Error: blank ssid"
+      return
+    }
+    // NOTE: a side-effect of removing a configuration is disconnecting from that ssid.
+    NEHotspotConfigurationManager.shared.removeConfiguration(forSSID: ssid)
+    self.statusLabel?.text = "Removing..."
+    // Wait a couple seconds for the wifi to switch
+    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+      self?.statusLabel?.text = self?.getWiFiSsid()
     }
   }
 
